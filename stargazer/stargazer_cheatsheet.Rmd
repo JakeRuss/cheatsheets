@@ -5,6 +5,7 @@ date: "Monday, August 18, 2014"
 output: 
   html_document:
     theme: spacelab
+    keep_md: true
     toc: true
     highlight: haddock
 ---
@@ -13,15 +14,16 @@ output:
 
 
 
-### Dataset: dplyr and nycflights13
+## Dataset: dplyr and nycflights13
 
-Setting up a dataset for this cheatsheet allows me to highlight two recent
+Setting up a dataset for this cheatsheet allows me to spotlight two recent
 R packages created by [Hadley Wickham](http://had.co.nz/). The first, 
 [dplyr](https://github.com/hadley/dplyr), is a set of new tools for data 
-manipulation. Using `dplyr`, I will extract flights data from another new 
-package called [nycflights13](https://github.com/hadley/nycflights13). I will 
-then use the flights data to estimate a couple of linear models and nicely 
-format the results into tables with `stargazer`.
+manipulation. Using `dplyr`, I will extract flights and weather data from 
+another new package called 
+[nycflights13](https://github.com/hadley/nycflights13). With this data I 
+will show how to estimate a couple of linear models and nicely format the 
+results into tables with `stargazer`.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(dplyr)
@@ -40,60 +42,197 @@ daily_weather <- weather %>%
             precip = sum(precip, na.rm = TRUE))
 
 both <- inner_join(daily, daily_weather)
+
+## Create an indicator for quarter
+both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
+                                labels = c("1", "2", "3", "4"))
+
+## Create a vector of class logical
+both$hot <- as.logical(both$temp > 85)
+
 head(both)
+
 ```
 
-We can use the `both` data frame to estimate a couple of linear models predicting 
-the average delay out of Newark controlling for the weather. The first model will
-use only the weather variables and in the second I'll add dummy variables 
-indicating the month. The raw R output:
+We can use the `both` data frame to estimate a couple of linear models 
+predicting the average delay out of Newark controlling for the weather. The 
+first model will use only the weather variables and in the second I'll add 
+dummy variables indicating the quarter. The raw R output:
 
 ```{r, echo = TRUE}
 output  <- lm(delay ~ temp + wind + precip, data = both)
-output2 <- lm(delay ~ temp + wind + precip + factor(month), data = both)
+output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
 summary(output)
 summary(output2)
 ```
 
+\
+[Back to table of contents](#TOC)
+
 ## Quick note
 
 Since I'm using [knitr](http://cran.rstudio.com/web/packages/knitr/index.html) 
 and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the 
-code that follows I will include the `stargazer` option `type = "html"`. If you 
-desire $LaTeX$ output, simply remove this option.
+code that follows I will include the `stargazer` option `type = "html"`. 
+`stargazer` is set to produce **LaTeX** output by default. If you desire 
+**LaTeX** output, just remove the type option from the code below.
 
 ```{r, warning = FALSE, message = FALSE}
 library(stargazer)
 ```
+
+\
+[Back to table of contents](#TOC)
 
 ## The default summary statistics table
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 stargazer(both, type = "html")
 ```
   
-By default `stargazer` creates a summary statistics table when supplied a
-data frame. If `summary` is instead set to `FALSE` then it will print the
-contents of the data frame.
+When supplied a data frame, by default `stargazer` creates a table with summary 
+statistics. If the `summary` option is set to `FALSE` then stargazer 
+will instead print the contents of the data frame.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Create a smaller data frame
+## Use only a few rows
 both2 <- both[1:6, ]
 
 stargazer(both2, type = "html", summary = FALSE)
 ```
 
-### Change the displayed statistics
+
+### Change which statistics are displayed
+
+In order to customize which summary statistics are displayed, change any of the
+the following (logical) parameters, `nobs`, `mean.sd`, `min.max`, `median`, and
+`iqr`. 
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-stargazer(both, type = "html")
+stargazer(both, type = "html", nobs = FALSE, mean.sd = TRUE, median = TRUE,
+          iqr = TRUE)
 ```
 
+### Change which statistics are displayed (a second way)
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both, type = "html", summary.stat = c("n", "p75", "sd"))
+```
+
+### Remove logical variables in the summary statistics
+
+`stargazer` reports summary statistics for logical variables by default 
+(0 = FALSE and 1 = TRUE). To supress the reporting of logical vectors change 
+`summary.logical` to `FALSE`. Note the stats for our vector `hot` are gone. 
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both, type = "html", summary.logical = FALSE)
+```
+
+\
+[Back to table of contents](#TOC)
 
 ## The default regression table
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 stargazer(output, output2, type = "html")
 ```
- 
-## Next
+
+\
+[Back to table of contents](#TOC)
+
+## Change the style
+
+`stargazer` includes several pre-formatted styles that imitate popular
+academic journals. Simply change the `style` parameter.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", style = "qje")
+```
+
+\
+[Back to table of contents](#TOC)
+
+## Labelling the table
+
+### Add a title; change the variable labels 
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          title            = "These are awesome results!",
+          covariate.labels = c("Temperature", "Wind speed", "Rain (inches)",
+                               "2nd quarter", "3rd quarter", "Fourth quarter"),
+          dep.var.caption  = "A better caption",
+          dep.var.labels   = "Flight delay (in minutes)")
+```
+
+### Exclude the dependent variable label or the model numbers
+
+Note the dependent variable caption stays. To additionally remove the caption 
+add `dep.var.caption = ""`.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          dep.var.labels.include = FALSE,
+          model.numbers          = FALSE)
+```
+
+### Change the column names
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", column.labels = c("Good", "Better"))
+```
+
+\
+[Back to table of contents](#TOC)
+
+## Omit parts of the default output
+
+In fixed effect model specifications it is often undesirable to report the 
+fixed effect coefficients. To omit any coefficient, supply a regular 
+expression to `omit`.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", omit = "quarter")
+```
+
+### Reporting omitted variables
+
+Add the `omit.labels` parameter to report which variables have been omitted. 
+Must be the same length as the number of regular expressions supplied to `omit`.
+By default `omit.labels` reports "Yes" or "No". To change this supply 
+a new vector of length 2 to `omit.yes.no = c("Yes", "No")`.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          omit        = "quarter",
+          omit.labels = "Quarter dummies?")
+```
+
+### Omit parts of the regression output
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Remove r-square and f-statistic
+stargazer(output, output2, type = "html", 
+          omit.stat = c("rsq", "f"))
+```
+
+### Omit whole parts of the table
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Remove statistics and notes sections completely
+stargazer(output, output2, type = "html", 
+          omit.table.layout = "sn")
+```
+
+\
+[Back to table of contents](#TOC)
+
+## Next section
+
+
+
+
+
+
+
