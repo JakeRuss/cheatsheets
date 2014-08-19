@@ -1,0 +1,99 @@
+---
+title: "A stargazer cheatsheet"
+author: "Jake Russ"
+date: "Monday, August 18, 2014"
+output: 
+  html_document:
+    theme: spacelab
+    toc: true
+    highlight: haddock
+---
+
+
+
+
+
+### Dataset: dplyr and nycflights13
+
+Setting up a dataset for this cheatsheet allows me to highlight two recent
+R packages created by [Hadley Wickham](http://had.co.nz/). The first, 
+[dplyr](https://github.com/hadley/dplyr), is a set of new tools for data 
+manipulation. Using `dplyr`, I will extract flights data from another new 
+package called [nycflights13](https://github.com/hadley/nycflights13). I will 
+then use the flights data to estimate a couple of linear models and nicely 
+format the results into tables with `stargazer`.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE}
+library(dplyr)
+library(nycflights13)
+
+daily <- flights %>%
+  filter(origin == "EWR") %>%
+  group_by(year, month, day) %>%
+  summarise(delay = mean(dep_delay, na.rm = TRUE))
+
+daily_weather <- weather %>%
+  filter(origin == "EWR") %>%
+  group_by(year, month, day) %>%
+  summarise(temp   = mean(temp, na.rm = TRUE),
+            wind   = mean(wind_speed, na.rm = TRUE),
+            precip = sum(precip, na.rm = TRUE))
+
+both <- inner_join(daily, daily_weather)
+head(both)
+```
+
+We can use the `both` data frame to estimate a couple of linear models predicting 
+the average delay out of Newark controlling for the weather. The first model will
+use only the weather variables and in the second I'll add dummy variables 
+indicating the month. The raw R output:
+
+```{r, echo = TRUE}
+output  <- lm(delay ~ temp + wind + precip, data = both)
+output2 <- lm(delay ~ temp + wind + precip + factor(month), data = both)
+
+summary(output)
+summary(output2)
+```
+
+## Quick note
+
+Since I'm using [knitr](http://cran.rstudio.com/web/packages/knitr/index.html) 
+and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the 
+code that follows I will include the `stargazer` option `type = "html"`. If you 
+desire $LaTeX$ output, simply remove this option.
+
+```{r, warning = FALSE, message = FALSE}
+library(stargazer)
+```
+
+## The default summary statistics table
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both, type = "html")
+```
+  
+By default `stargazer` creates a summary statistics table when supplied a
+data frame. If `summary` is instead set to `FALSE` then it will print the
+contents of the data frame.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Create a smaller data frame
+both2 <- both[1:6, ]
+
+stargazer(both2, type = "html", summary = FALSE)
+```
+
+### Change the displayed statistics
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both, type = "html")
+```
+
+
+## The default regression table
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html")
+```
+ 
+## Next
