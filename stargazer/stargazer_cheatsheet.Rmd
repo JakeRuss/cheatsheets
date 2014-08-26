@@ -22,12 +22,14 @@ R packages created by [Hadley Wickham](http://had.co.nz/). The first,
 manipulation. Using `dplyr`, I will extract flights and weather data from 
 another new package called 
 [nycflights13](https://github.com/hadley/nycflights13). With this data I 
-will show how to estimate a couple of linear models and nicely format the 
+will show how to estimate a couple of regression models and nicely format the 
 results into tables with `stargazer`.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(dplyr)
 library(nycflights13)
+
+library("AER") ## Applied Econometrics with R 
 
 daily <- flights %>%
   filter(origin == "EWR") %>%
@@ -63,8 +65,12 @@ dummy variables indicating the quarter. The raw R output:
 output  <- lm(delay ~ temp + wind + precip, data = both)
 output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
+## Instrumental variables model 
+output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
+
 summary(output)
 summary(output2)
+
 ```
 
 \
@@ -179,9 +185,49 @@ stargazer(output, output2, type = "html",
 
 ### Change the column names
 
+To change the column names just supply a character vector with the new labels, 
+as shown below. 
+
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 stargazer(output, output2, type = "html", column.labels = c("Good", "Better"))
 ```
+
+### Apply a label to more than one column
+
+The option `column.separate` allows for assigning a label to more than one 
+column. In this example I told `stargazer` to report each regression twice, for a
+total of four columns. Using `column.separate`, `stargazer` now applies the first
+label to the first two columns and the second label to the next two columns.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output, output2, output2, type = "html", 
+          column.labels   = c("Good", "Better"),
+          column.separate = c(2, 2))
+```
+
+### Model names
+
+When the results from different types of regression models (e.g., "OLS", 
+"probit") are displayed in the same table `stargazer` adds a row indicating 
+model type. Remove these labels by including `model.names = FALSE` (not shown).
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output3, type = "html")
+```
+
+\
+[Back to table of contents](#TOC)
+
+## Change the default output
+
+### Standard errors, t-statistics, or p-values?
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          column.labels = c("Good", "Better"))
+```
+
+### 
 
 \
 [Back to table of contents](#TOC)
@@ -228,7 +274,32 @@ stargazer(output, output2, type = "html",
 \
 [Back to table of contents](#TOC)
 
-## Next section
+
+## Statistical significance options
+
+By default `stargazer` uses \*\*\*, \*\*, and \* to denote statistical 
+significance at the one, five, and ten percent levels. This behavior can be 
+changed by altering the `star.char` option. 
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Remove statistics and notes sections completely
+stargazer(output, output2, type = "html", 
+          star.char = c("@", "@@", "@@@"))
+```
+
+### Change the cutoffs for significance
+
+Notice that temperature, quarter3, and quarter4 have each lost a gold star 
+because we made it tougher to earn them.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Remove statistics and notes sections completely
+stargazer(output, output2, type = "html", 
+          star.cutoffs = c(0.05, 0.01, 0.001)) # star.cutoffs = NULL by default
+```
+
+\
+[Back to table of contents](#TOC)
 
 
 
