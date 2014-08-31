@@ -144,6 +144,12 @@ stargazer(both, type = "html", summary.stat = c("n", "p75", "sd"))
 stargazer(both, type = "html", summary.logical = FALSE)
 ```
 
+### Flip the table axes
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both, type = "html", flip = TRUE)
+```
+
 \
 [Back to table of contents](#TOC)
 
@@ -332,25 +338,31 @@ stargazer(output, output2, type = "html",
 
 ### Omit whole parts of the table
 
-The argument `table.layout` accepts a character string that tells `stargazer` 
-which table elements to **include**. 
-
-```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove statistics and notes sections completely
-stargazer(output, output2, type = "html", 
-          table.layout = "#t")
-```
-
-### Omit whole parts of the table (a second way)
-
-Use to `omit.table.layout` to specify table elements to remove. Identical to 
-the example directly above.
+If you just want to remove parts of the table it is easier to use 
+`omit.table.layout` to explicitly specify table elements. See 
+`table layout chracters` for a list of codes.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 ## Remove statistics and notes sections completely
 stargazer(output, output2, type = "html", 
           omit.table.layout = "sn")
 ```
+
+### Omit whole parts of the table (a second way)
+
+Another way to achieve the result above is through the argument `table.layout`. It 
+also accepts a character string that tells `stargazer` which table elements to 
+**include**.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+## Include everything except the statistics and notes sections
+stargazer(output, output2, type = "html", 
+          table.layout = "-ld#-t=!")
+```
+
+
+
+
 
 \
 [Back to table of contents](#TOC)
