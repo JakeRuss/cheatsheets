@@ -65,10 +65,14 @@ head(both)
 
 ```
 
+\
 We can use the `both` data frame to estimate a couple of linear models 
 predicting the average delay out of Newark controlling for the weather. The 
 first model will use only the weather variables and in the second I'll add 
-dummy variables indicating the quarter. The raw R output:
+dummy variables indicating the quarter. I also estimate a third model, using 
+using the `ivreg` command from package 
+[AER](http://cran.r-project.org/web/packages/AER/index.html) to demonstrate 
+output with mixed models. The raw R output:
 
 ```{r, echo = TRUE}
 output  <- lm(delay ~ temp + wind + precip, data = both)
@@ -79,7 +83,7 @@ output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
 
 summary(output)
 summary(output2)
-
+summary(output3)
 ```
 
 \
@@ -92,19 +96,24 @@ and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the
 code that follows I will include the `stargazer` option `type = "html"`. 
 `stargazer` is set to produce **LaTeX** output by default. If you desire 
 **LaTeX** output, just remove the type option from the code below.
-
-```{r, warning = FALSE, message = FALSE}
-library(stargazer)
-```
+\
+Also, while I have added an example for many of the available `stargazer` 
+options, I have not included all of them. So while you're likely to find a 
+relevant example don't assume if it's not listed that `stargazer` can't do 
+it. Check the documentation for additional features and updates to the package.
+It is often the case that an omitted argument is specific for **LaTeX** output 
+and I can't demonstrate it here.
 
 \
 [Back to table of contents](#TOC)
 
 ## The default summary statistics table
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+library(stargazer)
 stargazer(both, type = "html")
 ```
-  
+
+\
 When supplied a data frame, by default `stargazer` creates a table with summary 
 statistics. If the `summary` option is set to `FALSE` then stargazer 
 will instead print the contents of the data frame.
@@ -116,6 +125,13 @@ both2 <- both[1:6, ]
 stargazer(both2, type = "html", summary = FALSE)
 ```
 
+### Remove row and column names
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(both2, type = "html", summary = FALSE,
+          rownames = FALSE,
+          colnames = FALSE)
+```
 
 ### Change which statistics are displayed
 
@@ -165,7 +181,7 @@ stargazer(output, output2, type = "html")
 ## Change the style
 
 `stargazer` includes several pre-formatted styles that imitate popular
-academic journals. Simply change the `style` parameter.
+academic journals. Use the `style` argument.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 stargazer(output, output2, type = "html", style = "qje")
@@ -227,7 +243,36 @@ When the results from different types of regression models (e.g., "OLS",
 model type. Remove these labels by including `model.names = FALSE` (not shown).
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-stargazer(output, output3, type = "html")
+stargazer(output, output2, output3, type = "html")
+```
+
+### Model names (again)
+
+The example above shows the default behavior of `stargazer` is to display only 
+one model name (and dependent variable caption) for adjacent columns with the 
+same model type. To repeat these labels for all of the columns, do the 
+following:
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, output3, type = "html",
+          multicolumn = FALSE)
+```
+
+### Add a custom row to the reported statistics
+
+I use this example to show how to add a row(s), such as reporting fixed effects.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html",
+          add.lines = list(c("Fixed effects?", "No", "No"),
+                           c("Results believable?", "Maybe", "Try again later")))
+```
+
+### Include R object names
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          object.names = TRUE)
 ```
 
 \
@@ -271,8 +316,9 @@ option `se`. For this example I will print the same model and adjust the
 standard errors in the first column with the `HC1` correction from the `sandwich`
 package (i.e. the same correction Stata uses).
 
-Similar options exits to make adjustments to the coefficients, t-statistics, 
-or p-values. See `coef`, `t`, or `p`.
+Similar options exits to supply adjusted values to the coefficients, 
+t-statistics, confidence intervals, and p-values. See `coef`, `t`, `ci.custom`, 
+or `p`.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 
@@ -328,13 +374,16 @@ stargazer(output, output2, type = "html",
           omit.labels = "Quarter dummies?")
 ```
 
-### Omit parts of the regression output
+### Omit summary statistics
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 ## Remove r-square and f-statistic
 stargazer(output, output2, type = "html", 
           omit.stat = c("rsq", "f"))
 ```
+
+\
+See also `keep.stat` a related argument with the opposite behavior.
 
 ### Omit whole parts of the table
 
@@ -357,12 +406,15 @@ also accepts a character string that tells `stargazer` which table elements to
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 ## Include everything except the statistics and notes sections
 stargazer(output, output2, type = "html", 
-          table.layout = "-ld#-t=!")
+          table.layout = "-ld#-t-")
 ```
 
+### Omit the degrees of freedom
 
-
-
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          df = FALSE)
+```
 
 \
 [Back to table of contents](#TOC)
@@ -374,7 +426,6 @@ significance at the one, five, and ten percent levels. This behavior can be
 changed by altering the `star.char` option. 
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove statistics and notes sections completely
 stargazer(output, output2, type = "html", 
           star.char = c("@", "@@", "@@@"))
 ```
@@ -385,7 +436,6 @@ Notice that temperature, quarter3, and quarter4 have each lost a gold star
 because we made it tougher to earn them.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove statistics and notes sections completely
 stargazer(output, output2, type = "html", 
           star.cutoffs = c(0.05, 0.01, 0.001)) # star.cutoffs = NULL by default
 ```
@@ -398,7 +448,6 @@ stargazer(output, output2, type = "html",
 ### Make an addition to the existing note section
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove r-square and f-statistic
 stargazer(output, output2, type = "html", 
           notes = "I make this look good!")
 ```
@@ -406,7 +455,6 @@ stargazer(output, output2, type = "html",
 ### Replace the note section
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove r-square and f-statistic
 stargazer(output, output2, type = "html", 
           notes        = "Sometimes you just have to start over.", 
           notes.append = FALSE)
@@ -415,7 +463,6 @@ stargazer(output, output2, type = "html",
 ### Change note alignment
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove r-square and f-statistic
 stargazer(output, output2, type = "html", 
           notes.align = "l")
 ```
@@ -423,7 +470,6 @@ stargazer(output, output2, type = "html",
 ### Change the note section label
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove r-square and f-statistic
 stargazer(output, output2, type = "html", 
           notes.label = "New note label")
 ```
@@ -431,6 +477,78 @@ stargazer(output, output2, type = "html",
 \
 [Back to table of contents](#TOC)
 
+## Table aesthetics
 
+### Change decimal character
 
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          decimal.mark = ",")
+```
 
+### Control the number of decimal places
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          digits = 1)
+```
+
+### Additional decimal controls
+
+You may also specify the number of additional decimal places to be used if a 
+number, when rounded to `digits` decimal places, is equal to zero (Use argument 
+`digits.extra`).
+
+My example models do not have any numbers in the thousands, so I won't show 
+them, but `digit.separate` and `digits.separator` are also available for 
+customizing the output of those characters.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          digits       = 1,
+          digits.extra = 1)
+```
+
+### Drop leading zeros from decimals
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          initial.zero = FALSE)
+```
+
+### Change the order of the variables
+
+The `order` argument will also accept a vector of regular expressions.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+stargazer(output, output2, type = "html", 
+          order = c(4, 5, 6, 3, 2, 1))
+```
+
+### Select which variables to keep in the table
+
+By default `keep = NULL` meaning all variables are included. `keep` accepts a
+vector of regular expressions.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+# Regex for keep "precip" but not "precipitation"
+stargazer(output, output2, type = "html", 
+          keep = c("\\bprecip\\b"))
+```
+
+\
+[Back to table of contents](#TOC)
+
+## Feedback and session information
+
+The .Rmd file for this cheatsheet 
+[is on GitHub](https://github.com/JakeRuss/cheatsheets/tree/master/stargazer)
+and I welcome suggestions or pull requests.
+
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+
+sessionInfo()
+```
+
+\
+[Back to table of contents](#TOC)
