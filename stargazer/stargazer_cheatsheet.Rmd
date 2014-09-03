@@ -7,21 +7,6 @@ output:
     highlight: haddock
 ---
 
-## Introduction
-
-This is a cheatsheet for the R package [stargazer](https://sites.google.com/site/marekhlavac/stargazer). Stargazer simplifies the process of making well formatted 
-regression and summary statistics tables. The credit for this great package 
-belongs to [Marek Hlavac](https://sites.google.com/site/marekhlavac/).
-
-I decided to make this cheatsheet after seeing Zev Ross' [ggplot2 cheatsheet](http://zevross.com/blog/2014/08/04/beautiful-plotting-in-r-a-ggplot2-cheatsheet-3/). I also want 
-to mention two other very cool cheatsheets created by 
-Garrett Grolemund over at [RStudio](http://www.rstudio.com/). Garrett made one 
-for [R Markdown](http://shiny.rstudio.com/articles/rm-cheatsheet.html) and one 
-for [Shiny](http://shiny.rstudio.com/articles/cheatsheet.html). Thank you for 
-the inspiration Garrett and Zev!
-
-Following Zev's lead, I'll setup a quick dataset and then run through iterations 
-of code and the resulting stargazer output.
 
 ## Dataset: dplyr and nycflights13
 
@@ -37,7 +22,6 @@ results into tables with `stargazer`.
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library(dplyr)
 library(nycflights13)
-
 library("AER") ## Applied Econometrics with R 
 
 daily <- flights %>%
@@ -96,6 +80,7 @@ and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the
 code that follows I will include the `stargazer` option `type = "html"`. 
 `stargazer` is set to produce **LaTeX** output by default. If you desire 
 **LaTeX** output, just remove the type option from the code below.
+
 \
 Also, while I have added an example for many of the available `stargazer` 
 options, I have not included all of them. So while you're likely to find a 
@@ -283,8 +268,9 @@ stargazer(output, output2, type = "html",
 ### Report t-statistics or p-values instead of standard errors
 
 Standard errors are reported by default. To report the t-statistics or
-p-values instead, see the `report` argument. Notice that I've also moved the
-star characters to the t-statistics instead of being next to the coefficients.
+p-values instead, see the `report` argument. Notice that I've used this option 
+to move the star characters to the t-statistics instead of being next to the
+coefficients.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 stargazer(output, output2, type = "html",
@@ -539,16 +525,11 @@ stargazer(output, output2, type = "html",
 \
 [Back to table of contents](#TOC)
 
-## Feedback and session information
+## Feedback
 
 The .Rmd file for this cheatsheet 
 [is on GitHub](https://github.com/JakeRuss/cheatsheets/tree/master/stargazer)
 and I welcome suggestions or pull requests.
-
-```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-
-sessionInfo()
-```
 
 \
 [Back to table of contents](#TOC)
