@@ -1,4 +1,6 @@
 ---
+title: "A Stargazer Cheatsheet"
+date: "Updated `r format(Sys.time(), '%d %B, %Y')`"
 output: 
   html_document:
     theme: spacelab
@@ -6,7 +8,6 @@ output:
     toc: yes
     highlight: haddock
 ---
-
 
 ## Dataset: dplyr and nycflights13
 
@@ -105,9 +106,9 @@ will instead print the contents of the data frame.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 ## Use only a few rows
-both2 <- both[1:6, ]
+both2 <- both %>% ungroup() %>% slice(1:6)
 
-stargazer(both2, type = "html", summary = FALSE)
+stargazer(both2, type = "html", summary = FALSE, rownames = FALSE)
 ```
 
 ### Remove row and column names
@@ -527,8 +528,7 @@ stargazer(output, output2, type = "html",
 
 ## Feedback
 
-The .Rmd file for this cheatsheet 
-[is on GitHub](https://github.com/JakeRuss/cheatsheets/tree/master/stargazer)
+The .Rmd file for this cheatsheet [is on GitHub](https://github.com/JakeRuss/cheatsheets) 
 and I welcome suggestions or pull requests.
 
 \
