@@ -21,9 +21,10 @@ will show how to estimate a couple of regression models and nicely format the
 results into tables with `stargazer`.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
-library(dplyr)
-library(nycflights13)
-library("AER") ## Applied Econometrics with R 
+library("dplyr")
+library("nycflights13")
+library("AER") # Applied Econometrics with R
+library("stargazer")
 
 daily <- flights %>%
   filter(origin == "EWR") %>%
@@ -39,11 +40,11 @@ daily_weather <- weather %>%
 
 both <- inner_join(daily, daily_weather)
 
-## Create an indicator for quarter
+# Create an indicator for quarter
 both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
                                 labels = c("1", "2", "3", "4"))
 
-## Create a vector of class logical
+# Create a vector of class logical
 both$hot <- as.logical(both$temp > 85)
 
 head(both)
@@ -63,7 +64,7 @@ output with mixed models. The raw R output:
 output  <- lm(delay ~ temp + wind + precip, data = both)
 output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
-## Instrumental variables model 
+# Instrumental variables model 
 output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
 
 summary(output)
@@ -95,7 +96,6 @@ and I can't demonstrate it here.
 
 ## The default summary statistics table
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-library(stargazer)
 stargazer(both, type = "html")
 ```
 
@@ -105,7 +105,7 @@ statistics. If the `summary` option is set to `FALSE` then stargazer
 will instead print the contents of the data frame.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Use only a few rows
+# Use only a few rows
 both2 <- both %>% ungroup() %>% slice(1:6)
 
 stargazer(both2, type = "html", summary = FALSE, rownames = FALSE)
@@ -379,7 +379,7 @@ If you just want to remove parts of the table it is easier to use
 `table layout chracters` for a list of codes.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Remove statistics and notes sections completely
+# Remove statistics and notes sections completely
 stargazer(output, output2, type = "html", 
           omit.table.layout = "sn")
 ```
@@ -391,7 +391,7 @@ also accepts a character string that tells `stargazer` which table elements to
 **include**.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-## Include everything except the statistics and notes sections
+# Include everything except the statistics and notes sections
 stargazer(output, output2, type = "html", 
           table.layout = "-ld#-t-")
 ```
@@ -465,6 +465,18 @@ stargazer(output, output2, type = "html",
 [Back to table of contents](#TOC)
 
 ## Table aesthetics
+
+### Use html tags to modify table elements
+```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
+
+# For LaTeX output you can also wrap table text in commands like \textbf{...}, 
+# just remember to escape the first backslash, e.g., "A \\textbf{better} caption"
+
+stargazer(output, output2, type = "html", 
+          title = "These are <em> awesome </em> results!",  # Italics
+          dep.var.caption  = "A <b> better </b> caption")   # Bold
+
+```
 
 ### Change decimal character
 
