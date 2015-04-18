@@ -14,9 +14,10 @@ results into tables with `stargazer`.
 
 
 ```r
-library(dplyr)
-library(nycflights13)
-library("AER") ## Applied Econometrics with R 
+library("dplyr")
+library("nycflights13")
+library("AER") # Applied Econometrics with R
+library("stargazer")
 
 daily <- flights %>%
   filter(origin == "EWR") %>%
@@ -32,11 +33,11 @@ daily_weather <- weather %>%
 
 both <- inner_join(daily, daily_weather)
 
-## Create an indicator for quarter
+# Create an indicator for quarter
 both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
                                 labels = c("1", "2", "3", "4"))
 
-## Create a vector of class logical
+# Create a vector of class logical
 both$hot <- as.logical(both$temp > 85)
 
 head(both)
@@ -69,7 +70,7 @@ output with mixed models. The raw R output:
 output  <- lm(delay ~ temp + wind + precip, data = both)
 output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
-## Instrumental variables model 
+# Instrumental variables model 
 output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
 
 summary(output)
@@ -181,7 +182,6 @@ and I can't demonstrate it here.
 ## The default summary statistics table
 
 ```r
-library(stargazer)
 stargazer(both, type = "html")
 ```
 
@@ -196,7 +196,7 @@ will instead print the contents of the data frame.
 
 
 ```r
-## Use only a few rows
+# Use only a few rows
 both2 <- both %>% ungroup() %>% slice(1:6)
 
 stargazer(both2, type = "html", summary = FALSE, rownames = FALSE)
@@ -1146,7 +1146,7 @@ If you just want to remove parts of the table it is easier to use
 
 
 ```r
-## Remove statistics and notes sections completely
+# Remove statistics and notes sections completely
 stargazer(output, output2, type = "html", 
           omit.table.layout = "sn")
 ```
@@ -1187,7 +1187,7 @@ also accepts a character string that tells `stargazer` which table elements to
 
 
 ```r
-## Include everything except the statistics and notes sections
+# Include everything except the statistics and notes sections
 stargazer(output, output2, type = "html", 
           table.layout = "-ld#-t-")
 ```
@@ -1535,6 +1535,52 @@ stargazer(output, output2, type = "html",
 [Back to table of contents](#TOC)
 
 ## Table aesthetics
+
+### Use html tags to modify table elements
+
+```r
+# For LaTeX output you can also wrap table text in commands like \textbf{...}, 
+# just remember to escape the first backslash, e.g., "A \\textbf{better} caption"
+
+stargazer(output, output2, type = "html", 
+          title = "These are <em> awesome </em> results!",  # Italics
+          dep.var.caption  = "A <b> better </b> caption")   # Bold
+```
+
+
+<table style="text-align:center"><caption><strong>These are <em> awesome </em> results!</strong></caption>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td colspan="2">A <b> better </b> caption</td></tr>
+<tr><td></td><td colspan="2" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align:left"></td><td colspan="2">delay</td></tr>
+<tr><td style="text-align:left"></td><td>(1)</td><td>(2)</td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">temp</td><td>0.088<sup>**</sup></td><td>0.184<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.041)</td><td>(0.069)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">wind</td><td>0.166</td><td>0.114</td></tr>
+<tr><td style="text-align:left"></td><td>(0.164)</td><td>(0.164)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">precip</td><td>18.918<sup>***</sup></td><td>18.167<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(3.249)</td><td>(3.230)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">quarter2</td><td></td><td>-2.265</td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(2.660)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">quarter3</td><td></td><td>-7.526<sup>**</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(3.226)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">quarter4</td><td></td><td>-4.757<sup>**</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(2.104)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td style="text-align:left">Constant</td><td>7.263<sup>**</sup></td><td>6.142<sup>*</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(3.099)</td><td>(3.536)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>364</td><td>364</td></tr>
+<tr><td style="text-align:left">R<sup>2</sup></td><td>0.097</td><td>0.122</td></tr>
+<tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.089</td><td>0.107</td></tr>
+<tr><td style="text-align:left">Residual Std. Error</td><td>13.248 (df = 360)</td><td>13.119 (df = 357)</td></tr>
+<tr><td style="text-align:left">F Statistic</td><td>12.879<sup>***</sup> (df = 3; 360)</td><td>8.253<sup>***</sup> (df = 6; 357)</td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
+</table>
 
 ### Change decimal character
 
