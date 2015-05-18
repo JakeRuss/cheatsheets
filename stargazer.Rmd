@@ -314,7 +314,7 @@ cov1        <- vcovHC(output, type = "HC1")
 robust.se   <- sqrt(diag(cov1))
 
 stargazer(output, output, type = "html", 
-          se = list(robust.se))
+          se = list(robust.se, NULL))
 ```
 
 ### Move the intercept term to the top of the table
