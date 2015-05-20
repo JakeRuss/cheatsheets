@@ -133,6 +133,7 @@ img {
 <div id="dataset-dplyr-and-nycflights13" class="section level2">
 <h2>Dataset: dplyr and nycflights13</h2>
 <p>Setting up a dataset for this cheatsheet allows me to spotlight two recent R packages created by <a href="http://had.co.nz/">Hadley Wickham</a>. The first, <a href="https://github.com/hadley/dplyr">dplyr</a>, is a set of new tools for data manipulation. Using <code>dplyr</code>, I will extract flights and weather data from another new package called <a href="https://github.com/hadley/nycflights13">nycflights13</a>. With this data I will show how to estimate a couple of regression models and nicely format the results into tables with <code>stargazer</code>.</p>
+<p>Note: <code>stargazer</code> v. 5.1 does not play nicely with <code>dplyr</code>’s tbl_df class. As a temporary work-around I pipe the merged dataset to <code>data.frame</code>.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(<span class="st">&quot;dplyr&quot;</span>)
 <span class="kw">library</span>(<span class="st">&quot;nycflights13&quot;</span>)
 <span class="kw">library</span>(<span class="st">&quot;AER&quot;</span>) <span class="co"># Applied Econometrics with R</span>
@@ -150,7 +151,9 @@ daily_weather &lt;-<span class="st"> </span>weather %&gt;%
             <span class="dt">wind   =</span> <span class="kw">mean</span>(wind_speed, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>),
             <span class="dt">precip =</span> <span class="kw">sum</span>(precip, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))
 
-both &lt;-<span class="st"> </span><span class="kw">inner_join</span>(daily, daily_weather)
+<span class="co"># Merge flights with weather data frames</span>
+both &lt;-<span class="st"> </span><span class="kw">inner_join</span>(daily, daily_weather) %&gt;%<span class="st"> </span>
+<span class="st">  </span><span class="kw">data.frame</span>()  <span class="co"># Temporary fix</span>
 
 <span class="co"># Create an indicator for quarter</span>
 both$quarter &lt;-<span class="st"> </span><span class="kw">cut</span>(both$month, <span class="dt">breaks =</span> <span class="kw">c</span>(<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>), 
@@ -160,10 +163,7 @@ both$quarter &lt;-<span class="st"> </span><span class="kw">cut</span>(both$mont
 both$hot &lt;-<span class="st"> </span><span class="kw">as.logical</span>(both$temp &gt;<span class="st"> </span><span class="dv">85</span>)
 
 <span class="kw">head</span>(both)</code></pre>
-<pre><code>## Source: local data frame [6 x 9]
-## Groups: year, month
-## 
-##   year month day     delay    temp      wind precip quarter   hot
+<pre><code>##   year month day     delay    temp      wind precip quarter   hot
 ## 1 2013     1   1 17.483553 38.4800 12.758648      0       1 FALSE
 ## 2 2013     1   2 25.322674 28.8350 12.514732      0       1 FALSE
 ## 3 2013     1   3  8.450450 29.4575  7.863663      0       1 FALSE
@@ -175,7 +175,7 @@ both$hot &lt;-<span class="st"> </span><span class="kw">as.logical</span>(both$t
 output2 &lt;-<span class="st"> </span><span class="kw">lm</span>(delay ~<span class="st"> </span>temp +<span class="st"> </span>wind +<span class="st"> </span>precip +<span class="st"> </span>quarter, <span class="dt">data =</span> both)
 
 <span class="co"># Instrumental variables model </span>
-output3 &lt;-<span class="st"> </span><span class="kw">ivreg</span>(delay ~<span class="st"> </span>temp +<span class="st"> </span>wind +<span class="st"> </span>precip|<span class="st"> </span>. -<span class="st"> </span>temp +<span class="st"> </span>hot, <span class="dt">data =</span> both)
+output3 &lt;-<span class="st"> </span><span class="kw">ivreg</span>(delay ~<span class="st"> </span>temp +<span class="st"> </span>wind +<span class="st"> </span>precip |<span class="st"> </span>. -<span class="st"> </span>temp +<span class="st"> </span>hot, <span class="dt">data =</span> both)
 
 <span class="kw">summary</span>(output)</code></pre>
 <pre><code>## 
@@ -284,10 +284,174 @@ Max
 <td colspan="6" style="border-bottom: 1px solid black">
 </td>
 </tr>
+<tr>
+<td style="text-align:left">
+year
+</td>
+<td>
+364
+</td>
+<td>
+2,013.000
+</td>
+<td>
+0.000
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+month
+</td>
+<td>
+364
+</td>
+<td>
+6.511
+</td>
+<td>
+3.445
+</td>
+<td>
+1
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+day
+</td>
+<td>
+364
+</td>
+<td>
+15.679
+</td>
+<td>
+8.784
+</td>
+<td>
+1
+</td>
+<td>
+31
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+delay
+</td>
+<td>
+364
+</td>
+<td>
+15.080
+</td>
+<td>
+13.883
+</td>
+<td>
+-1.349
+</td>
+<td>
+97.771
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+temp
+</td>
+<td>
+364
+</td>
+<td>
+55.481
+</td>
+<td>
+17.581
+</td>
+<td>
+15.492
+</td>
+<td>
+91.168
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+wind
+</td>
+<td>
+364
+</td>
+<td>
+9.339
+</td>
+<td>
+4.363
+</td>
+<td>
+2.014
+</td>
+<td>
+55.669
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+precip
+</td>
+<td>
+364
+</td>
+<td>
+0.073
+</td>
+<td>
+0.214
+</td>
+<td>
+0.000
+</td>
+<td>
+1.890
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+hot
+</td>
+<td>
+364
+</td>
+<td>
+0.022
+</td>
+<td>
+0.147
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<td colspan="6" style="border-bottom: 1px solid black">
+</td>
+</tr>
 </table>
 <p><br />When supplied a data frame, by default <code>stargazer</code> creates a table with summary statistics. If the <code>summary</code> option is set to <code>FALSE</code> then stargazer will instead print the contents of the data frame.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Use only a few rows</span>
-both2 &lt;-<span class="st"> </span>both %&gt;%<span class="st"> </span><span class="kw">ungroup</span>() %&gt;%<span class="st"> </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">6</span>)
+both2 &lt;-<span class="st"> </span>both %&gt;%<span class="st"> </span><span class="kw">slice</span>(<span class="dv">1</span>:<span class="dv">6</span>)
 
 <span class="kw">stargazer</span>(both2, <span class="dt">type =</span> <span class="st">&quot;html&quot;</span>, <span class="dt">summary =</span> <span class="ot">FALSE</span>, <span class="dt">rownames =</span> <span class="ot">FALSE</span>)</code></pre>
 <table style="text-align:center">
@@ -330,7 +494,7 @@ hot
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -339,13 +503,13 @@ hot
 1
 </td>
 <td>
-17.4835526315789
+17.484
 </td>
 <td>
-38.48
+38.480
 </td>
 <td>
-12.758647826087
+12.759
 </td>
 <td>
 0
@@ -359,7 +523,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -368,13 +532,13 @@ FALSE
 2
 </td>
 <td>
-25.3226744186047
+25.323
 </td>
 <td>
 28.835
 </td>
 <td>
-12.5147325
+12.515
 </td>
 <td>
 0
@@ -388,7 +552,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -397,13 +561,13 @@ FALSE
 3
 </td>
 <td>
-8.45045045045045
+8.450
 </td>
 <td>
-29.4575
+29.457
 </td>
 <td>
-7.86366333333333
+7.864
 </td>
 <td>
 0
@@ -417,7 +581,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -426,13 +590,13 @@ FALSE
 4
 </td>
 <td>
-12.1038575667656
+12.104
 </td>
 <td>
-33.4775
+33.477
 </td>
 <td>
-13.8573091666667
+13.857
 </td>
 <td>
 0
@@ -446,7 +610,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -455,13 +619,13 @@ FALSE
 5
 </td>
 <td>
-5.69620253164557
+5.696
 </td>
 <td>
-36.7325
+36.733
 </td>
 <td>
-10.8365116666667
+10.837
 </td>
 <td>
 0
@@ -475,7 +639,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -484,13 +648,13 @@ FALSE
 6
 </td>
 <td>
-12.3833333333333
+12.383
 </td>
 <td>
-37.97
+37.970
 </td>
 <td>
-8.00751083333333
+8.008
 </td>
 <td>
 0
@@ -519,7 +683,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -528,13 +692,13 @@ FALSE
 1
 </td>
 <td>
-17.4835526315789
+17.484
 </td>
 <td>
-38.48
+38.480
 </td>
 <td>
-12.758647826087
+12.759
 </td>
 <td>
 0
@@ -548,7 +712,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -557,13 +721,13 @@ FALSE
 2
 </td>
 <td>
-25.3226744186047
+25.323
 </td>
 <td>
 28.835
 </td>
 <td>
-12.5147325
+12.515
 </td>
 <td>
 0
@@ -577,7 +741,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -586,13 +750,13 @@ FALSE
 3
 </td>
 <td>
-8.45045045045045
+8.450
 </td>
 <td>
-29.4575
+29.457
 </td>
 <td>
-7.86366333333333
+7.864
 </td>
 <td>
 0
@@ -606,7 +770,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -615,13 +779,13 @@ FALSE
 4
 </td>
 <td>
-12.1038575667656
+12.104
 </td>
 <td>
-33.4775
+33.477
 </td>
 <td>
-13.8573091666667
+13.857
 </td>
 <td>
 0
@@ -635,7 +799,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -644,13 +808,13 @@ FALSE
 5
 </td>
 <td>
-5.69620253164557
+5.696
 </td>
 <td>
-36.7325
+36.733
 </td>
 <td>
-10.8365116666667
+10.837
 </td>
 <td>
 0
@@ -664,7 +828,7 @@ FALSE
 </tr>
 <tr>
 <td style="text-align:left">
-2013
+2,013
 </td>
 <td>
 1
@@ -673,13 +837,13 @@ FALSE
 6
 </td>
 <td>
-12.3833333333333
+12.383
 </td>
 <td>
-37.97
+37.970
 </td>
 <td>
-8.00751083333333
+8.008
 </td>
 <td>
 0
@@ -737,6 +901,218 @@ Max
 <td colspan="8" style="border-bottom: 1px solid black">
 </td>
 </tr>
+<tr>
+<td style="text-align:left">
+year
+</td>
+<td>
+2,013.000
+</td>
+<td>
+0.000
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+month
+</td>
+<td>
+6.511
+</td>
+<td>
+3.445
+</td>
+<td>
+1
+</td>
+<td>
+4
+</td>
+<td>
+7
+</td>
+<td>
+9.2
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+day
+</td>
+<td>
+15.679
+</td>
+<td>
+8.784
+</td>
+<td>
+1
+</td>
+<td>
+8
+</td>
+<td>
+16
+</td>
+<td>
+23
+</td>
+<td>
+31
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+delay
+</td>
+<td>
+15.080
+</td>
+<td>
+13.883
+</td>
+<td>
+-1.349
+</td>
+<td>
+5.446
+</td>
+<td>
+10.501
+</td>
+<td>
+20.007
+</td>
+<td>
+97.771
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+temp
+</td>
+<td>
+55.481
+</td>
+<td>
+17.581
+</td>
+<td>
+15.492
+</td>
+<td>
+39.873
+</td>
+<td>
+56.960
+</td>
+<td>
+71.570
+</td>
+<td>
+91.168
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+wind
+</td>
+<td>
+9.339
+</td>
+<td>
+4.363
+</td>
+<td>
+2.014
+</td>
+<td>
+6.557
+</td>
+<td>
+8.847
+</td>
+<td>
+11.556
+</td>
+<td>
+55.669
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+precip
+</td>
+<td>
+0.073
+</td>
+<td>
+0.214
+</td>
+<td>
+0.000
+</td>
+<td>
+0.000
+</td>
+<td>
+0.000
+</td>
+<td>
+0.020
+</td>
+<td>
+1.890
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+hot
+</td>
+<td>
+0.022
+</td>
+<td>
+0.147
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+0
+</td>
+<td>
+1
+</td>
+</tr>
+<tr>
+<td colspan="8" style="border-bottom: 1px solid black">
+</td>
+</tr>
 </table>
 </div>
 <div id="change-which-statistics-are-displayed-a-second-way" class="section level3">
@@ -759,6 +1135,122 @@ Pctl(75)
 </td>
 <td>
 St. Dev.
+</td>
+</tr>
+<tr>
+<td colspan="4" style="border-bottom: 1px solid black">
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+year
+</td>
+<td>
+364
+</td>
+<td>
+2,013
+</td>
+<td>
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+month
+</td>
+<td>
+364
+</td>
+<td>
+9.2
+</td>
+<td>
+3.445
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+day
+</td>
+<td>
+364
+</td>
+<td>
+23
+</td>
+<td>
+8.784
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+delay
+</td>
+<td>
+364
+</td>
+<td>
+20.007
+</td>
+<td>
+13.883
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+temp
+</td>
+<td>
+364
+</td>
+<td>
+71.570
+</td>
+<td>
+17.581
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+wind
+</td>
+<td>
+364
+</td>
+<td>
+11.556
+</td>
+<td>
+4.363
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+precip
+</td>
+<td>
+364
+</td>
+<td>
+0.020
+</td>
+<td>
+0.214
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+hot
+</td>
+<td>
+364
+</td>
+<td>
+0
+</td>
+<td>
+0.147
 </td>
 </tr>
 <tr>
@@ -800,6 +1292,150 @@ Max
 <td colspan="6" style="border-bottom: 1px solid black">
 </td>
 </tr>
+<tr>
+<td style="text-align:left">
+year
+</td>
+<td>
+364
+</td>
+<td>
+2,013.000
+</td>
+<td>
+0.000
+</td>
+<td>
+2,013
+</td>
+<td>
+2,013
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+month
+</td>
+<td>
+364
+</td>
+<td>
+6.511
+</td>
+<td>
+3.445
+</td>
+<td>
+1
+</td>
+<td>
+12
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+day
+</td>
+<td>
+364
+</td>
+<td>
+15.679
+</td>
+<td>
+8.784
+</td>
+<td>
+1
+</td>
+<td>
+31
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+delay
+</td>
+<td>
+364
+</td>
+<td>
+15.080
+</td>
+<td>
+13.883
+</td>
+<td>
+-1.349
+</td>
+<td>
+97.771
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+temp
+</td>
+<td>
+364
+</td>
+<td>
+55.481
+</td>
+<td>
+17.581
+</td>
+<td>
+15.492
+</td>
+<td>
+91.168
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+wind
+</td>
+<td>
+364
+</td>
+<td>
+9.339
+</td>
+<td>
+4.363
+</td>
+<td>
+2.014
+</td>
+<td>
+55.669
+</td>
+</tr>
+<tr>
+<td style="text-align:left">
+precip
+</td>
+<td>
+364
+</td>
+<td>
+0.073
+</td>
+<td>
+0.214
+</td>
+<td>
+0.000
+</td>
+<td>
+1.890
+</td>
+</tr>
+<tr>
+<td colspan="6" style="border-bottom: 1px solid black">
+</td>
+</tr>
 </table>
 </div>
 <div id="flip-the-table-axes" class="section level3">
@@ -807,45 +1443,189 @@ Max
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">stargazer</span>(both, <span class="dt">type =</span> <span class="st">&quot;html&quot;</span>, <span class="dt">flip =</span> <span class="ot">TRUE</span>)</code></pre>
 <table style="text-align:center">
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="9" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 Statistic
 </td>
+<td>
+year
+</td>
+<td>
+month
+</td>
+<td>
+day
+</td>
+<td>
+delay
+</td>
+<td>
+temp
+</td>
+<td>
+wind
+</td>
+<td>
+precip
+</td>
+<td>
+hot
+</td>
 </tr>
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="9" style="border-bottom: 1px solid black">
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 N
 </td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
+<td>
+364
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 Mean
+</td>
+<td>
+2,013.000
+</td>
+<td>
+6.511
+</td>
+<td>
+15.679
+</td>
+<td>
+15.080
+</td>
+<td>
+55.481
+</td>
+<td>
+9.339
+</td>
+<td>
+0.073
+</td>
+<td>
+0.022
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 St. Dev.
 </td>
+<td>
+0.000
+</td>
+<td>
+3.445
+</td>
+<td>
+8.784
+</td>
+<td>
+13.883
+</td>
+<td>
+17.581
+</td>
+<td>
+4.363
+</td>
+<td>
+0.214
+</td>
+<td>
+0.147
+</td>
 </tr>
 <tr>
 <td style="text-align:left">
 Min
+</td>
+<td>
+2,013
+</td>
+<td>
+1
+</td>
+<td>
+1
+</td>
+<td>
+-1.349
+</td>
+<td>
+15.492
+</td>
+<td>
+2.014
+</td>
+<td>
+0.000
+</td>
+<td>
+0
 </td>
 </tr>
 <tr>
 <td style="text-align:left">
 Max
 </td>
+<td>
+2,013
+</td>
+<td>
+12
+</td>
+<td>
+31
+</td>
+<td>
+97.771
+</td>
+<td>
+91.168
+</td>
+<td>
+55.669
+</td>
+<td>
+1.890
+</td>
+<td>
+1
+</td>
 </tr>
 <tr>
-<td colspan="3" style="border-bottom: 1px solid black">
+<td colspan="9" style="border-bottom: 1px solid black">
 </td>
 </tr>
 </table>
@@ -5313,7 +6093,7 @@ cov1        &lt;-<span class="st"> </span><span class="kw">vcovHC</span>(output,
 robust.se   &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">diag</span>(cov1))
 
 <span class="kw">stargazer</span>(output, output, <span class="dt">type =</span> <span class="st">&quot;html&quot;</span>, 
-          <span class="dt">se =</span> <span class="kw">list</span>(robust.se))</code></pre>
+          <span class="dt">se =</span> <span class="kw">list</span>(robust.se, <span class="ot">NULL</span>))</code></pre>
 <table style="text-align:center">
 <tr>
 <td colspan="3" style="border-bottom: 1px solid black">

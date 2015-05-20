@@ -12,6 +12,9 @@ another new package called
 will show how to estimate a couple of regression models and nicely format the 
 results into tables with `stargazer`.
 
+Note: `stargazer` v. 5.1 does not play nicely with `dplyr`'s tbl_df class.
+As a temporary work-around I pipe the merged dataset to `data.frame`.
+
 
 ```r
 library("dplyr")
@@ -31,7 +34,9 @@ daily_weather <- weather %>%
             wind   = mean(wind_speed, na.rm = TRUE),
             precip = sum(precip, na.rm = TRUE))
 
-both <- inner_join(daily, daily_weather)
+# Merge flights with weather data frames
+both <- inner_join(daily, daily_weather) %>% 
+  data.frame()  # Temporary fix
 
 # Create an indicator for quarter
 both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
@@ -44,9 +49,6 @@ head(both)
 ```
 
 ```
-## Source: local data frame [6 x 9]
-## Groups: year, month
-## 
 ##   year month day     delay    temp      wind precip quarter   hot
 ## 1 2013     1   1 17.483553 38.4800 12.758648      0       1 FALSE
 ## 2 2013     1   2 25.322674 28.8350 12.514732      0       1 FALSE
@@ -71,7 +73,7 @@ output  <- lm(delay ~ temp + wind + precip, data = both)
 output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
 # Instrumental variables model 
-output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
+output3 <- ivreg(delay ~ temp + wind + precip | . - temp + hot, data = both)
 
 summary(output)
 ```
@@ -187,6 +189,14 @@ stargazer(both, type = "html")
 
 
 <table style="text-align:center"><tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td><td>N</td><td>Mean</td><td>St. Dev.</td><td>Min</td><td>Max</td></tr>
+<tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">year</td><td>364</td><td>2,013.000</td><td>0.000</td><td>2,013</td><td>2,013</td></tr>
+<tr><td style="text-align:left">month</td><td>364</td><td>6.511</td><td>3.445</td><td>1</td><td>12</td></tr>
+<tr><td style="text-align:left">day</td><td>364</td><td>15.679</td><td>8.784</td><td>1</td><td>31</td></tr>
+<tr><td style="text-align:left">delay</td><td>364</td><td>15.080</td><td>13.883</td><td>-1.349</td><td>97.771</td></tr>
+<tr><td style="text-align:left">temp</td><td>364</td><td>55.481</td><td>17.581</td><td>15.492</td><td>91.168</td></tr>
+<tr><td style="text-align:left">wind</td><td>364</td><td>9.339</td><td>4.363</td><td>2.014</td><td>55.669</td></tr>
+<tr><td style="text-align:left">precip</td><td>364</td><td>0.073</td><td>0.214</td><td>0.000</td><td>1.890</td></tr>
+<tr><td style="text-align:left">hot</td><td>364</td><td>0.022</td><td>0.147</td><td>0</td><td>1</td></tr>
 <tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr></table>
 
 \
@@ -197,19 +207,19 @@ will instead print the contents of the data frame.
 
 ```r
 # Use only a few rows
-both2 <- both %>% ungroup() %>% slice(1:6)
+both2 <- both %>% slice(1:6)
 
 stargazer(both2, type = "html", summary = FALSE, rownames = FALSE)
 ```
 
 
 <table style="text-align:center"><tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">year</td><td>month</td><td>day</td><td>delay</td><td>temp</td><td>wind</td><td>precip</td><td>quarter</td><td>hot</td></tr>
-<tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">2013</td><td>1</td><td>1</td><td>17.4835526315789</td><td>38.48</td><td>12.758647826087</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>2</td><td>25.3226744186047</td><td>28.835</td><td>12.5147325</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>3</td><td>8.45045045045045</td><td>29.4575</td><td>7.86366333333333</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>4</td><td>12.1038575667656</td><td>33.4775</td><td>13.8573091666667</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>5</td><td>5.69620253164557</td><td>36.7325</td><td>10.8365116666667</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>6</td><td>12.3833333333333</td><td>37.97</td><td>8.00751083333333</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">2,013</td><td>1</td><td>1</td><td>17.484</td><td>38.480</td><td>12.759</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>2</td><td>25.323</td><td>28.835</td><td>12.515</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>3</td><td>8.450</td><td>29.457</td><td>7.864</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>4</td><td>12.104</td><td>33.477</td><td>13.857</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>5</td><td>5.696</td><td>36.733</td><td>10.837</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>6</td><td>12.383</td><td>37.970</td><td>8.008</td><td>0</td><td>1</td><td>FALSE</td></tr>
 <tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr></table>
 
 ### Remove row and column names
@@ -222,12 +232,12 @@ stargazer(both2, type = "html", summary = FALSE,
 ```
 
 
-<table style="text-align:center"><tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">2013</td><td>1</td><td>1</td><td>17.4835526315789</td><td>38.48</td><td>12.758647826087</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>2</td><td>25.3226744186047</td><td>28.835</td><td>12.5147325</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>3</td><td>8.45045045045045</td><td>29.4575</td><td>7.86366333333333</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>4</td><td>12.1038575667656</td><td>33.4775</td><td>13.8573091666667</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>5</td><td>5.69620253164557</td><td>36.7325</td><td>10.8365116666667</td><td>0</td><td>1</td><td>FALSE</td></tr>
-<tr><td style="text-align:left">2013</td><td>1</td><td>6</td><td>12.3833333333333</td><td>37.97</td><td>8.00751083333333</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<table style="text-align:center"><tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">2,013</td><td>1</td><td>1</td><td>17.484</td><td>38.480</td><td>12.759</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>2</td><td>25.323</td><td>28.835</td><td>12.515</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>3</td><td>8.450</td><td>29.457</td><td>7.864</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>4</td><td>12.104</td><td>33.477</td><td>13.857</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>5</td><td>5.696</td><td>36.733</td><td>10.837</td><td>0</td><td>1</td><td>FALSE</td></tr>
+<tr><td style="text-align:left">2,013</td><td>1</td><td>6</td><td>12.383</td><td>37.970</td><td>8.008</td><td>0</td><td>1</td><td>FALSE</td></tr>
 <tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr></table>
 
 ### Change which statistics are displayed
@@ -244,6 +254,14 @@ stargazer(both, type = "html", nobs = FALSE, mean.sd = TRUE, median = TRUE,
 
 
 <table style="text-align:center"><tr><td colspan="8" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td><td>Mean</td><td>St. Dev.</td><td>Min</td><td>Pctl(25)</td><td>Median</td><td>Pctl(75)</td><td>Max</td></tr>
+<tr><td colspan="8" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">year</td><td>2,013.000</td><td>0.000</td><td>2,013</td><td>2,013</td><td>2,013</td><td>2,013</td><td>2,013</td></tr>
+<tr><td style="text-align:left">month</td><td>6.511</td><td>3.445</td><td>1</td><td>4</td><td>7</td><td>9.2</td><td>12</td></tr>
+<tr><td style="text-align:left">day</td><td>15.679</td><td>8.784</td><td>1</td><td>8</td><td>16</td><td>23</td><td>31</td></tr>
+<tr><td style="text-align:left">delay</td><td>15.080</td><td>13.883</td><td>-1.349</td><td>5.446</td><td>10.501</td><td>20.007</td><td>97.771</td></tr>
+<tr><td style="text-align:left">temp</td><td>55.481</td><td>17.581</td><td>15.492</td><td>39.873</td><td>56.960</td><td>71.570</td><td>91.168</td></tr>
+<tr><td style="text-align:left">wind</td><td>9.339</td><td>4.363</td><td>2.014</td><td>6.557</td><td>8.847</td><td>11.556</td><td>55.669</td></tr>
+<tr><td style="text-align:left">precip</td><td>0.073</td><td>0.214</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.020</td><td>1.890</td></tr>
+<tr><td style="text-align:left">hot</td><td>0.022</td><td>0.147</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr>
 <tr><td colspan="8" style="border-bottom: 1px solid black"></td></tr></table>
 
 ### Change which statistics are displayed (a second way)
@@ -255,6 +273,14 @@ stargazer(both, type = "html", summary.stat = c("n", "p75", "sd"))
 
 
 <table style="text-align:center"><tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td><td>N</td><td>Pctl(75)</td><td>St. Dev.</td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">year</td><td>364</td><td>2,013</td><td>0.000</td></tr>
+<tr><td style="text-align:left">month</td><td>364</td><td>9.2</td><td>3.445</td></tr>
+<tr><td style="text-align:left">day</td><td>364</td><td>23</td><td>8.784</td></tr>
+<tr><td style="text-align:left">delay</td><td>364</td><td>20.007</td><td>13.883</td></tr>
+<tr><td style="text-align:left">temp</td><td>364</td><td>71.570</td><td>17.581</td></tr>
+<tr><td style="text-align:left">wind</td><td>364</td><td>11.556</td><td>4.363</td></tr>
+<tr><td style="text-align:left">precip</td><td>364</td><td>0.020</td><td>0.214</td></tr>
+<tr><td style="text-align:left">hot</td><td>364</td><td>0</td><td>0.147</td></tr>
 <tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr></table>
 
 ### Remove logical variables in the summary statistics
@@ -270,6 +296,13 @@ stargazer(both, type = "html", summary.logical = FALSE)
 
 
 <table style="text-align:center"><tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td><td>N</td><td>Mean</td><td>St. Dev.</td><td>Min</td><td>Max</td></tr>
+<tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">year</td><td>364</td><td>2,013.000</td><td>0.000</td><td>2,013</td><td>2,013</td></tr>
+<tr><td style="text-align:left">month</td><td>364</td><td>6.511</td><td>3.445</td><td>1</td><td>12</td></tr>
+<tr><td style="text-align:left">day</td><td>364</td><td>15.679</td><td>8.784</td><td>1</td><td>31</td></tr>
+<tr><td style="text-align:left">delay</td><td>364</td><td>15.080</td><td>13.883</td><td>-1.349</td><td>97.771</td></tr>
+<tr><td style="text-align:left">temp</td><td>364</td><td>55.481</td><td>17.581</td><td>15.492</td><td>91.168</td></tr>
+<tr><td style="text-align:left">wind</td><td>364</td><td>9.339</td><td>4.363</td><td>2.014</td><td>55.669</td></tr>
+<tr><td style="text-align:left">precip</td><td>364</td><td>0.073</td><td>0.214</td><td>0.000</td><td>1.890</td></tr>
 <tr><td colspan="6" style="border-bottom: 1px solid black"></td></tr></table>
 
 ### Flip the table axes
@@ -280,13 +313,13 @@ stargazer(both, type = "html", flip = TRUE)
 ```
 
 
-<table style="text-align:center"><tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td></tr>
-<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">N</td></tr>
-<tr><td style="text-align:left">Mean</td></tr>
-<tr><td style="text-align:left">St. Dev.</td></tr>
-<tr><td style="text-align:left">Min</td></tr>
-<tr><td style="text-align:left">Max</td></tr>
-<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr></table>
+<table style="text-align:center"><tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Statistic</td><td>year</td><td>month</td><td>day</td><td>delay</td><td>temp</td><td>wind</td><td>precip</td><td>hot</td></tr>
+<tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">N</td><td>364</td><td>364</td><td>364</td><td>364</td><td>364</td><td>364</td><td>364</td><td>364</td></tr>
+<tr><td style="text-align:left">Mean</td><td>2,013.000</td><td>6.511</td><td>15.679</td><td>15.080</td><td>55.481</td><td>9.339</td><td>0.073</td><td>0.022</td></tr>
+<tr><td style="text-align:left">St. Dev.</td><td>0.000</td><td>3.445</td><td>8.784</td><td>13.883</td><td>17.581</td><td>4.363</td><td>0.214</td><td>0.147</td></tr>
+<tr><td style="text-align:left">Min</td><td>2,013</td><td>1</td><td>1</td><td>-1.349</td><td>15.492</td><td>2.014</td><td>0.000</td><td>0</td></tr>
+<tr><td style="text-align:left">Max</td><td>2,013</td><td>12</td><td>31</td><td>97.771</td><td>91.168</td><td>55.669</td><td>1.890</td><td>1</td></tr>
+<tr><td colspan="9" style="border-bottom: 1px solid black"></td></tr></table>
 
 \
 [Back to table of contents](#TOC)
@@ -913,7 +946,7 @@ cov1        <- vcovHC(output, type = "HC1")
 robust.se   <- sqrt(diag(cov1))
 
 stargazer(output, output, type = "html", 
-          se = list(robust.se))
+          se = list(robust.se, NULL))
 ```
 
 
