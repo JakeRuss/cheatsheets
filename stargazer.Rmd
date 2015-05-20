@@ -20,6 +20,9 @@ another new package called
 will show how to estimate a couple of regression models and nicely format the 
 results into tables with `stargazer`.
 
+Note: `stargazer` v. 5.1 does not play nicely with `dplyr`'s tbl_df class.
+As a temporary work-around I pipe the merged dataset to `data.frame`.
+
 ```{r, echo = TRUE, warning = FALSE, message = FALSE}
 library("dplyr")
 library("nycflights13")
@@ -38,7 +41,9 @@ daily_weather <- weather %>%
             wind   = mean(wind_speed, na.rm = TRUE),
             precip = sum(precip, na.rm = TRUE))
 
-both <- inner_join(daily, daily_weather)
+# Merge flights with weather data frames
+both <- inner_join(daily, daily_weather) %>% 
+  data.frame()  # Temporary fix
 
 # Create an indicator for quarter
 both$quarter <- cut(both$month, breaks = c(0, 3, 6, 9, 12), 
@@ -65,7 +70,7 @@ output  <- lm(delay ~ temp + wind + precip, data = both)
 output2 <- lm(delay ~ temp + wind + precip + quarter, data = both)
 
 # Instrumental variables model 
-output3 <- ivreg(delay ~ temp + wind + precip| . - temp + hot, data = both)
+output3 <- ivreg(delay ~ temp + wind + precip | . - temp + hot, data = both)
 
 summary(output)
 summary(output2)
@@ -106,7 +111,7 @@ will instead print the contents of the data frame.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
 # Use only a few rows
-both2 <- both %>% ungroup() %>% slice(1:6)
+both2 <- both %>% slice(1:6)
 
 stargazer(both2, type = "html", summary = FALSE, rownames = FALSE)
 ```
@@ -314,7 +319,7 @@ cov1        <- vcovHC(output, type = "HC1")
 robust.se   <- sqrt(diag(cov1))
 
 stargazer(output, output, type = "html", 
-          se = list(robust.se))
+          se = list(robust.se, NULL))
 ```
 
 ### Move the intercept term to the top of the table
