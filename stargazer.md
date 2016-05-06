@@ -162,7 +162,7 @@ summary(output3)
 \
 [Back to table of contents](#TOC)
 
-## Quick note
+## Quick notes
 
 Since I'm using [knitr](http://cran.rstudio.com/web/packages/knitr/index.html) 
 and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the 
@@ -177,6 +177,12 @@ relevant example don't assume if it's not listed that `stargazer` can't do
 it. Check the documentation for additional features and updates to the package.
 It is often the case that an omitted argument is specific for **LaTeX** output 
 and I can't demonstrate it here.
+
+### HTML formatting
+
+It is possible to change the formatting of html tables generated with `stargazer` 
+via an html style sheet. See the [R Markdown documentation](http://rmarkdown.rstudio.com/html_document_format.html#custom_css) 
+about incorporating a custom CSS. 
 
 \
 [Back to table of contents](#TOC)
@@ -927,26 +933,39 @@ stargazer(output, output2, type = "html",
 <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
 </table>
 
-### Robust standard errors (Replicating Stata)
+### Robust standard errors (replicating Stata's robust option)
 
 If you want to use robust standard errors (or clustered), `stargazer` allows 
 for replacing the default output by supplying a new vector of values to the 
-option `se`. For this example I will print the same model and adjust the 
-standard errors in the first column with the `HC1` correction from the `sandwich`
-package (i.e. the same correction Stata uses).
+option `se`. For this example I will display the same model twice and adjust the 
+standard errors in the second column with the `HC1` correction from the `sandwich`
+package (i.e. the same correction Stata uses). 
 
-Similar options exits to supply adjusted values to the coefficients, 
+I also need to adjust the F statistic with the corrected variance-covariance 
+matrix (matching Stata's results). Currently, this must be done manually 
+(via `add.lines`) as `stargazer` does not (yet) have an option for directly 
+replacing the F statistic.
+
+Similar options exist to supply adjusted values to the coefficients, 
 t-statistics, confidence intervals, and p-values. See `coef`, `t`, `ci.custom`, 
 or `p`.
 
 
 ```r
 library(sandwich)
-cov1        <- vcovHC(output, type = "HC1")
-robust.se   <- sqrt(diag(cov1))
+library(lmtest)   # waldtest; see also coeftest.
 
-stargazer(output, output, type = "html", 
-          se = list(robust.se, NULL))
+# Adjust standard errors
+cov1         <- vcovHC(output, type = "HC1")
+robust_se    <- sqrt(diag(cov1))
+
+# Adjust F statistic 
+wald_results <- waldtest(output, vcov = cov1)
+
+stargazer(output, output, type = "html",
+          se        = list(NULL, robust_se),
+          omit.stat = "f",
+          add.lines = list(c("F Statistic (df = 3; 360)", "12.879***", "7.73***")))
 ```
 
 
@@ -955,22 +974,22 @@ stargazer(output, output, type = "html",
 <tr><td style="text-align:left"></td><td colspan="2">delay</td></tr>
 <tr><td style="text-align:left"></td><td>(1)</td><td>(2)</td></tr>
 <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">temp</td><td>0.088<sup>**</sup></td><td>0.088<sup>**</sup></td></tr>
-<tr><td style="text-align:left"></td><td>(0.043)</td><td>(0.041)</td></tr>
+<tr><td style="text-align:left"></td><td>(0.041)</td><td>(0.043)</td></tr>
 <tr><td style="text-align:left"></td><td></td><td></td></tr>
 <tr><td style="text-align:left">wind</td><td>0.166</td><td>0.166</td></tr>
-<tr><td style="text-align:left"></td><td>(0.159)</td><td>(0.164)</td></tr>
+<tr><td style="text-align:left"></td><td>(0.164)</td><td>(0.159)</td></tr>
 <tr><td style="text-align:left"></td><td></td><td></td></tr>
 <tr><td style="text-align:left">precip</td><td>18.918<sup>***</sup></td><td>18.918<sup>***</sup></td></tr>
-<tr><td style="text-align:left"></td><td>(4.735)</td><td>(3.249)</td></tr>
+<tr><td style="text-align:left"></td><td>(3.249)</td><td>(4.735)</td></tr>
 <tr><td style="text-align:left"></td><td></td><td></td></tr>
 <tr><td style="text-align:left">Constant</td><td>7.263<sup>**</sup></td><td>7.263<sup>**</sup></td></tr>
-<tr><td style="text-align:left"></td><td>(3.053)</td><td>(3.099)</td></tr>
+<tr><td style="text-align:left"></td><td>(3.099)</td><td>(3.053)</td></tr>
 <tr><td style="text-align:left"></td><td></td><td></td></tr>
-<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>364</td><td>364</td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">F Statistic (df = 3; 360)</td><td>12.879***</td><td>7.73***</td></tr>
+<tr><td style="text-align:left">Observations</td><td>364</td><td>364</td></tr>
 <tr><td style="text-align:left">R<sup>2</sup></td><td>0.097</td><td>0.097</td></tr>
 <tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.089</td><td>0.089</td></tr>
 <tr><td style="text-align:left">Residual Std. Error (df = 360)</td><td>13.248</td><td>13.248</td></tr>
-<tr><td style="text-align:left">F Statistic (df = 3; 360)</td><td>12.879<sup>***</sup></td><td>12.879<sup>***</sup></td></tr>
 <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
 </table>
 
@@ -1118,7 +1137,7 @@ stargazer(output, output2, type = "html",
 <tr><td style="text-align:left">Constant</td><td>7.263<sup>**</sup></td><td>6.142<sup>*</sup></td></tr>
 <tr><td style="text-align:left"></td><td>(3.099)</td><td>(3.536)</td></tr>
 <tr><td style="text-align:left"></td><td></td><td></td></tr>
-<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Quarter dummies?</td><td>No</td><td>Yes</td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Quarter dummies?</td><td>No</td><td>No</td></tr>
 <tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>364</td><td>364</td></tr>
 <tr><td style="text-align:left">R<sup>2</sup></td><td>0.097</td><td>0.122</td></tr>
 <tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0.089</td><td>0.107</td></tr>
@@ -1654,7 +1673,7 @@ stargazer(output, output2, type = "html",
 <tr><td style="text-align:left">Adjusted R<sup>2</sup></td><td>0,089</td><td>0,107</td></tr>
 <tr><td style="text-align:left">Residual Std. Error</td><td>13,248 (df = 360)</td><td>13,119 (df = 357)</td></tr>
 <tr><td style="text-align:left">F Statistic</td><td>12,879<sup>***</sup> (df = 3; 360)</td><td>8,253<sup>***</sup> (df = 6; 357)</td></tr>
-<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
+<tr><td colspan="3" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="2" style="text-align:right"><sup>*</sup>p<0,1; <sup>**</sup>p<0,05; <sup>***</sup>p<0,01</td></tr>
 </table>
 
 ### Control the number of decimal places
