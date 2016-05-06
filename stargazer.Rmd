@@ -80,7 +80,7 @@ summary(output3)
 \
 [Back to table of contents](#TOC)
 
-## Quick note
+## Quick notes
 
 Since I'm using [knitr](http://cran.rstudio.com/web/packages/knitr/index.html) 
 and [R markdown](http://rmarkdown.rstudio.com/) to create this webpage, in the 
@@ -95,6 +95,12 @@ relevant example don't assume if it's not listed that `stargazer` can't do
 it. Check the documentation for additional features and updates to the package.
 It is often the case that an omitted argument is specific for **LaTeX** output 
 and I can't demonstrate it here.
+
+### HTML formatting
+
+It is possible to change the formatting of html tables generated with `stargazer` 
+via an html style sheet. See the [R Markdown documentation](http://rmarkdown.rstudio.com/html_document_format.html#custom_css) 
+about incorporating a custom CSS. 
 
 \
 [Back to table of contents](#TOC)
