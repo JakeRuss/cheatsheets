@@ -306,26 +306,38 @@ stargazer(output, output2, type = "html",
           ci = TRUE, ci.level = 0.90, ci.separator = " @@ ")
 ```
 
-### Robust standard errors (Replicating Stata)
+### Robust standard errors (replicating Stata's robust option)
 
 If you want to use robust standard errors (or clustered), `stargazer` allows 
 for replacing the default output by supplying a new vector of values to the 
-option `se`. For this example I will print the same model and adjust the 
-standard errors in the first column with the `HC1` correction from the `sandwich`
-package (i.e. the same correction Stata uses).
+option `se`. For this example I will display the same model twice and adjust the 
+standard errors in the second column with the `HC1` correction from the `sandwich`
+package (i.e. the same correction Stata uses). 
 
-Similar options exits to supply adjusted values to the coefficients, 
+I also need to adjust the F statistic with the corrected variance-covariance 
+matrix (matching Stata's results). Currently, this must be done manually 
+(via `add.lines`) as `stargazer` does not (yet) have an option for directly 
+replacing the F statistic.
+
+Similar options exist to supply adjusted values to the coefficients, 
 t-statistics, confidence intervals, and p-values. See `coef`, `t`, `ci.custom`, 
 or `p`.
 
 ```{r, echo = TRUE, warning = FALSE, message = FALSE, results='asis'}
-
 library(sandwich)
-cov1        <- vcovHC(output, type = "HC1")
-robust.se   <- sqrt(diag(cov1))
+library(lmtest)   # waldtest; see also coeftest.
 
-stargazer(output, output, type = "html", 
-          se = list(robust.se, NULL))
+# Adjust standard errors
+cov1         <- vcovHC(output, type = "HC1")
+robust_se    <- sqrt(diag(cov1))
+
+# Adjust F statistic 
+wald_results <- waldtest(output, vcov = cov1)
+
+stargazer(output, output, type = "html",
+          se        = list(NULL, robust_se),
+          omit.stat = "f",
+          add.lines = list(c("F Statistic (df = 3; 360)", "12.879***", "7.73***")))
 ```
 
 ### Move the intercept term to the top of the table
